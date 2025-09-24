@@ -1,0 +1,1043 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { 
+    Home, Users, Briefcase, Calendar, Megaphone, DollarSign, Plus, X, Edit, Trash2, Menu, ArrowLeft, 
+    Instagram, Phone, Mail, CheckCircle, XCircle, AlertCircle, Info, Image as ImageIcon, 
+    GitFork, UserCheck 
+} from 'lucide-react';
+
+// --- Helper Functions & Initial Data ---
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
+
+const initialData = {
+  schoolInfo: {
+      name: "SMA Harapan Bangsa",
+      address: "Jl. Pendidikan No. 1, Kota Pelajar",
+      email: "osis@smaharapanbangsa.sch.id",
+      phone: "021-12345678"
+  },
+  members: [
+    { id: 1, name: 'Budi Santoso', class: 'XI IPA 1', position: 'Ketua OSIS', gender: 'Laki-laki', age: 17, phone: '081234567890', instagram: 'budisann' },
+    { id: 2, name: 'Citra Lestari', class: 'XI IPS 2', position: 'Wakil Ketua', gender: 'Perempuan', age: 17, phone: '081234567891', instagram: 'citralstr' },
+    { id: 3, name: 'Dewi Anggraini', class: 'X-A', position: 'Sekretaris I', gender: 'Perempuan', age: 16, phone: '081234567892', instagram: 'dewiangg' },
+    { id: 4, name: 'Ahmad Fauzi', class: 'X-B', position: 'Sekretaris II', gender: 'Laki-laki', age: 16, phone: '081234567893', instagram: 'ahmadfau' },
+    { id: 5, name: 'Eko Prasetyo', class: 'XI IPA 3', position: 'Bendahara I', gender: 'Laki-laki', age: 17, phone: '081234567894', instagram: 'ekopras' },
+    { id: 6, name: 'Fitriani', class: 'X-C', position: 'Bendahara II', gender: 'Perempuan', age: 16, phone: '081234567895', instagram: 'fitriani_' },
+    { id: 7, name: 'Gilang Ramadhan', class: 'XI IPS 1', position: 'Koordinator Seksi Acara', gender: 'Laki-laki', age: 17, phone: '081234567896', instagram: 'gilangrmd' },
+    { id: 8, name: 'Hana Yulita', class: 'X-D', position: 'Anggota Seksi Acara', gender: 'Perempuan', age: 16, phone: '081234567897', instagram: 'hanayul' },
+    { id: 9, name: 'Indra Kusuma', class: 'XI IPA 2', position: 'Koordinator Seksi Humas', gender: 'Laki-laki', age: 17, phone: '081234567898', instagram: 'indrakus' },
+    { id: 10, name: 'Jasmine Putri', class: 'X-E', position: 'Anggota Seksi Humas', gender: 'Perempuan', age: 16, phone: '081234567899', instagram: 'jasminep' },
+  ],
+  programs: [
+    { id: 1, name: 'Lomba 17 Agustus', pic: 'Gilang Ramadhan', status: 'Selesai', date: '2024-08-17' },
+    { id: 2, name: 'Class Meeting Semester Ganjil', pic: 'Budi Santoso', status: 'Berjalan', date: '2024-12-10' },
+    { id: 3, name: 'Pentas Seni Akhir Tahun', pic: 'Citra Lestari', status: 'Terencana', date: '2025-06-15' },
+    { id: 4, name: 'Bakti Sosial', pic: 'Dewi Anggraini', status: 'Terencana', date: '2025-03-22' },
+  ],
+  meetings: [
+      { id: 1, title: "Rapat Pleno Persiapan Pensi", date: "2024-12-10T15:00", location: "Ruang OSIS", agenda: "Finalisasi konsep, pembagian tugas panitia, dan penetapan anggaran." },
+      { id: 2, title: "Evaluasi Lomba 17 Agustus", date: "2024-08-20T14:00", location: "Aula Sekolah", agenda: "Membahas laporan pertanggungjawaban dan evaluasi pelaksanaan acara." },
+      { id: 3, title: "Rapat Rutin Bulanan", date: "2025-01-05T15:30", location: "Ruang OSIS", agenda: "Update progres setiap seksi dan rencana kegiatan bulan Januari." },
+  ],
+  announcements: [
+    { id: 1, title: 'Rapat Pleno Persiapan Pensi', content: 'Diadakan pada hari Sabtu, 10 Desember 2024 di Ruang OSIS. Kehadiran wajib bagi seluruh panitia.', date: '2024-12-05' },
+    { id: 2, title: 'Pengumpulan Laporan Keuangan', content: 'Bendahara setiap seksi diharapkan mengumpulkan laporan keuangan bulan November paling lambat tanggal 5 Desember 2024.', date: '2024-12-01' },
+  ],
+  transactions: [
+    { id: 1, date: '2024-11-01', description: 'Dana Kas Awal', type: 'Pemasukan', amount: 1500000 },
+    { id: 2, date: '2024-11-15', description: 'Pembelian ATK Rapat', type: 'Pengeluaran', amount: 75000 },
+    { id: 3, date: '2024-11-20', description: 'Sponsor Acara Maulid Nabi', type: 'Pemasukan', amount: 500000 },
+    { id: 4, date: '2024-12-02', description: 'Biaya Cetak Spanduk Class Meeting', type: 'Pengeluaran', amount: 120000 },
+  ],
+  gallery: [
+      { id: 1, url: 'https://placehold.co/600x400/a3e635/ffffff?text=Lomba+17+Agustus', caption: 'Keseruan lomba balap karung 17 Agustus' },
+      { id: 2, url: 'https://placehold.co/600x400/38bdf8/ffffff?text=Rapat+OSIS', caption: 'Rapat persiapan Pentas Seni' },
+      { id: 3, url: 'https://placehold.co/600x400/f87171/ffffff?text=Bakti+Sosial', caption: 'Penyerahan bantuan di panti asuhan' },
+      { id: 4, url: 'https://placehold.co/600x400/fbbf24/ffffff?text=Class+Meeting', caption: 'Pertandingan final futsal Class Meeting' },
+  ],
+  attendance: {
+      'meeting-1': {
+          'member-1': 'Hadir', 'member-2': 'Hadir', 'member-3': 'Izin', 'member-4': 'Hadir', 'member-5': 'Sakit', 'member-6': 'Hadir', 'member-7': 'Hadir', 'member-8': 'Alpa', 'member-9': 'Hadir', 'member-10': 'Hadir'
+      }
+  }
+};
+
+// --- Main App Component ---
+export default function App() {
+  const [activeView, setActiveView] = useState('dashboard');
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  
+  // States for managing data
+  const [schoolInfo] = useState(initialData.schoolInfo);
+  const [members, setMembers] = useState(initialData.members);
+  const [programs, setPrograms] = useState(initialData.programs);
+  const [meetings, setMeetings] = useState(initialData.meetings);
+  const [announcements, setAnnouncements] = useState(initialData.announcements);
+  const [transactions, setTransactions] = useState(initialData.transactions);
+  const [gallery, setGallery] = useState(initialData.gallery);
+  const [attendance, setAttendance] = useState(initialData.attendance);
+
+  const renderView = () => {
+    switch (activeView) {
+      case 'dashboard':
+        return <DashboardView schoolInfo={schoolInfo} members={members} programs={programs} announcements={announcements} transactions={transactions} />;
+      case 'anggota':
+        return <MembersView members={members} setMembers={setMembers} />;
+      case 'struktur':
+        return <StructureView members={members} />;
+      case 'program':
+        return <ProgramsView programs={programs} setPrograms={setPrograms} members={members} />;
+      case 'jadwal':
+        return <MeetingsView meetings={meetings} setMeetings={setMeetings} />;
+      case 'absensi':
+        return <AttendanceView members={members} meetings={meetings} attendance={attendance} setAttendance={setAttendance} />;
+      case 'pengumuman':
+        return <AnnouncementsView announcements={announcements} setAnnouncements={setAnnouncements} />;
+      case 'keuangan':
+        return <FinanceView transactions={transactions} setTransactions={setTransactions} />;
+      case 'galeri':
+        return <GalleryView gallery={gallery} setGallery={setGallery} />;
+      default:
+        return <DashboardView schoolInfo={schoolInfo} members={members} programs={programs} announcements={announcements} transactions={transactions} />;
+    }
+  };
+
+  return (
+    <div className="bg-gray-100 dark:bg-gray-900 font-sans min-h-screen flex">
+      <Sidebar activeView={activeView} setActiveView={setActiveView} isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-64">
+        <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          {renderView()}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// --- Layout Components: Sidebar & Header ---
+
+const Sidebar = ({ activeView, setActiveView, isSidebarOpen, setSidebarOpen }) => {
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'anggota', label: 'Anggota', icon: Users },
+    { id: 'struktur', label: 'Struktur Organisasi', icon: GitFork },
+    { id: 'program', label: 'Program Kerja', icon: Briefcase },
+    { id: 'jadwal', label: 'Jadwal Rapat', icon: Calendar },
+    { id: 'absensi', label: 'Absensi', icon: UserCheck },
+    { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone },
+    { id: 'keuangan', label: 'Keuangan', icon: DollarSign },
+    { id: 'galeri', label: 'Galeri', icon: ImageIcon },
+  ];
+
+  const handleNavClick = (view) => {
+    setActiveView(view);
+    if (isSidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
+  return (
+    <>
+      <div className={`fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden transition-opacity ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)}></div>
+      <aside className={`fixed top-0 left-0 h-full bg-white dark:bg-gray-800 w-64 shadow-lg z-40 transform transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+          <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">OSIS-App</h1>
+           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-500 dark:text-gray-400">
+            <ArrowLeft size={20} />
+          </button>
+        </div>
+        <nav className="mt-4 pb-4 overflow-y-auto h-[calc(100vh-70px)]">
+          <ul>
+            {navItems.map(item => (
+              <li key={item.id} className="px-4 py-1">
+                <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); handleNavClick(item.id); }}
+                  className={`flex items-center p-3 rounded-lg transition-colors ${
+                    activeView === item.id
+                      ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <item.icon size={20} className="mr-3" />
+                  <span className="font-medium">{item.label}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+    </>
+  );
+};
+
+const Header = ({ toggleSidebar }) => {
+  return (
+    <header className="bg-white dark:bg-gray-800 shadow-sm p-4 flex items-center justify-between lg:justify-end sticky top-0 z-20">
+      <button onClick={toggleSidebar} className="lg:hidden text-gray-600 dark:text-gray-300">
+        <Menu size={24} />
+      </button>
+      <div className="flex items-center">
+        <p className="text-gray-700 dark:text-gray-200 font-medium">Selamat Datang, Admin!</p>
+      </div>
+    </header>
+  );
+};
+
+// --- Reusable Components ---
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-sm">
+                <div className="flex items-start">
+                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/50 sm:mx-0 sm:h-10 sm:w-10">
+                        <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" aria-hidden="true" />
+                    </div>
+                    <div className="ml-4 text-left">
+                        <h3 className="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="modal-title">{title}</h3>
+                        <div className="mt-2">
+                            <p className="text-sm text-gray-500 dark:text-gray-300">{message}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-6 sm:flex sm:flex-row-reverse">
+                    <button
+                        type="button"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm"
+                        onClick={onConfirm}
+                    >
+                        Hapus
+                    </button>
+                    <button
+                        type="button"
+                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 sm:mt-0 sm:w-auto sm:text-sm"
+                        onClick={onClose}
+                    >
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- View Components ---
+
+const DashboardView = ({ schoolInfo, members, programs, announcements, transactions }) => {
+    const totalBalance = useMemo(() => transactions.reduce((acc, t) => acc + (t.type === 'Pemasukan' ? t.amount : -t.amount), 0), [transactions]);
+    const upcomingPrograms = useMemo(() => programs.filter(p => p.status !== 'Selesai').sort((a, b) => new Date(a.date) - new Date(b.date)), [programs]);
+
+    const stats = [
+        { label: 'Total Anggota', value: members.length, icon: Users, color: 'text-blue-500' },
+        { label: 'Program Berjalan', value: programs.filter(p => p.status === 'Berjalan').length, icon: Briefcase, color: 'text-green-500' },
+        { label: 'Saldo Kas', value: formatCurrency(totalBalance), icon: DollarSign, color: 'text-yellow-500' },
+    ];
+
+    return (
+        <div className="space-y-8">
+            <div>
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Dashboard OSIS</h2>
+                <p className="text-lg text-gray-600 dark:text-gray-300">{schoolInfo.name}</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {stats.map(stat => (
+                    <div key={stat.label} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex items-center space-x-4">
+                        <div className={`p-3 rounded-full bg-opacity-20 ${stat.color.replace('text-', 'bg-')}`}>
+                            <stat.icon size={28} className={stat.color} />
+                        </div>
+                        <div>
+                            <p className="text-gray-500 dark:text-gray-400">{stat.label}</p>
+                            <p className="text-2xl font-bold text-gray-800 dark:text-white">{stat.value}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                    <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Program Kerja Terdekat</h3>
+                    <ul className="space-y-4">
+                        {upcomingPrograms.slice(0, 4).map(program => (
+                             <li key={program.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                                <div>
+                                    <p className="font-semibold text-gray-700 dark:text-gray-200">{program.name}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(program.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                </div>
+                                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                    program.status === 'Berjalan' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                                }`}>{program.status}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                    <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Pengumuman Terbaru</h3>
+                     <ul className="space-y-4">
+                        {announcements.slice(0, 3).map(ann => (
+                            <li key={ann.id} className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <p className="font-semibold text-gray-700 dark:text-gray-200">{ann.title}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{ann.content.substring(0, 80)}...</p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 text-right mt-2">{new Date(ann.date).toLocaleDateString('id-ID')}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+const MembersView = ({ members, setMembers }) => {
+    const [showModal, setShowModal] = useState(false);
+    const [editingMember, setEditingMember] = useState(null);
+    const [confirmDelete, setConfirmDelete] = useState(null);
+    const initialFormState = { name: '', class: '', position: '', gender: 'Laki-laki', age: '', phone: '', instagram: '' };
+    const [formData, setFormData] = useState(initialFormState);
+
+    const handleOpenModal = (member = null) => {
+        setEditingMember(member);
+        setFormData(member ? { ...member } : initialFormState);
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setEditingMember(null);
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (editingMember) {
+            setMembers(members.map(m => m.id === editingMember.id ? { ...m, ...formData, age: Number(formData.age) } : m));
+        } else {
+            const newMember = {
+                id: members.length > 0 ? Math.max(...members.map(m => m.id)) + 1 : 1,
+                ...formData,
+                age: Number(formData.age)
+            };
+            setMembers([...members, newMember]);
+        }
+        handleCloseModal();
+    };
+
+    const handleDelete = (id) => {
+        setConfirmDelete(id);
+    };
+    
+    const confirmDeletion = () => {
+        setMembers(members.filter(m => m.id !== confirmDelete));
+        setConfirmDelete(null);
+    };
+
+    const Avatar = ({ name }) => {
+        const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500', 'bg-indigo-500', 'bg-purple-500'];
+        const color = colors[name.charCodeAt(0) % colors.length];
+        return (
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${color}`}>
+                {name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+            </div>
+        );
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Manajemen Anggota</h2>
+                <button onClick={() => handleOpenModal()} className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">
+                    <Plus size={20} className="mr-2" />
+                    Tambah Anggota
+                </button>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead className="border-b-2 border-gray-200 dark:border-gray-700">
+                        <tr>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Nama</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Jabatan</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Kontak</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {members.map(member => (
+                            <tr key={member.id} className="border-b border-gray-100 dark:border-gray-700">
+                                <td className="p-4 flex items-center space-x-3">
+                                    <Avatar name={member.name} />
+                                    <div>
+                                        <p className="font-medium text-gray-800 dark:text-gray-100">{member.name}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{member.class} ({member.age} thn)</p>
+                                    </div>
+                                </td>
+                                <td className="p-4 text-gray-600 dark:text-gray-300">{member.position}</td>
+                                <td className="p-4 text-gray-600 dark:text-gray-300">
+                                    <div className="flex items-center space-x-2">
+                                        <Phone size={14} /> <span>{member.phone}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2 mt-1">
+                                        <Instagram size={14} /> <span>@{member.instagram}</span>
+                                    </div>
+                                </td>
+                                <td className="p-4 text-center">
+                                    <div className="flex justify-center space-x-2">
+                                        <button onClick={() => handleOpenModal(member)} className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"><Edit size={18} /></button>
+                                        <button onClick={() => handleDelete(member.id)} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition"><Trash2 size={18} /></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <ConfirmModal 
+                isOpen={!!confirmDelete}
+                onClose={() => setConfirmDelete(null)}
+                onConfirm={confirmDeletion}
+                title="Hapus Anggota"
+                message="Apakah Anda yakin ingin menghapus anggota ini? Tindakan ini tidak dapat dibatalkan."
+            />
+
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white">{editingMember ? 'Edit Anggota' : 'Tambah Anggota Baru'}</h3>
+                            <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"><X size={24} /></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Nama Lengkap" className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                                <input type="text" name="class" value={formData.class} onChange={handleChange} placeholder="Kelas" className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                                <input type="text" name="position" value={formData.position} onChange={handleChange} placeholder="Jabatan" className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                                <select name="gender" value={formData.gender} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+                                    <option>Laki-laki</option>
+                                    <option>Perempuan</option>
+                                </select>
+                                <input type="number" name="age" value={formData.age} onChange={handleChange} placeholder="Usia" className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="Nomor HP" className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                                <input type="text" name="instagram" value={formData.instagram} onChange={handleChange} placeholder="Username Instagram (tanpa @)" className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                            </div>
+                            <div className="flex justify-end pt-4">
+                                <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const StructureView = ({ members }) => {
+    const positions = [
+        { level: 0, role: 'Ketua OSIS' },
+        { level: 1, role: 'Wakil Ketua' },
+        { level: 2, role: 'Sekretaris I' },
+        { level: 2, role: 'Sekretaris II' },
+        { level: 2, role: 'Bendahara I' },
+        { level: 2, role: 'Bendahara II' },
+        { level: 3, role: 'Koordinator Seksi Acara' },
+        { level: 3, role: 'Koordinator Seksi Humas' },
+        { level: 4, role: 'Anggota Seksi Acara' },
+        { level: 4, role: 'Anggota Seksi Humas' },
+    ];
+
+    const getMemberByRole = (role) => members.find(m => m.position === role);
+    const getMembersByRole = (role) => members.filter(m => m.position === role);
+
+    const Card = ({ member }) => (
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md text-center min-w-[180px]">
+            <p className="font-bold text-indigo-600 dark:text-indigo-400">{member.name}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{member.position}</p>
+        </div>
+    );
+
+    return (
+        <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Struktur Organisasi</h2>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md overflow-x-auto">
+                <div className="flex flex-col items-center space-y-8">
+                    {getMemberByRole('Ketua OSIS') && <Card member={getMemberByRole('Ketua OSIS')} />}
+                    
+                    <div className="w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
+                    {getMemberByRole('Wakil Ketua') && <Card member={getMemberByRole('Wakil Ketua')} />}
+                    
+                    <div className="w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
+                    <div className="flex justify-center gap-8 flex-wrap">
+                        {getMemberByRole('Sekretaris I') && <Card member={getMemberByRole('Sekretaris I')} />}
+                        {getMemberByRole('Sekretaris II') && <Card member={getMemberByRole('Sekretaris II')} />}
+                        {getMemberByRole('Bendahara I') && <Card member={getMemberByRole('Bendahara I')} />}
+                        {getMemberByRole('Bendahara II') && <Card member={getMemberByRole('Bendahara II')} />}
+                    </div>
+
+                    <div className="w-1/2 h-px bg-gray-300 dark:bg-gray-600 my-4"></div>
+                    <div className="flex justify-center gap-16 flex-wrap">
+                       <div className="flex flex-col items-center space-y-4">
+                           {getMemberByRole('Koordinator Seksi Acara') && <Card member={getMemberByRole('Koordinator Seksi Acara')} />}
+                           {getMembersByRole('Anggota Seksi Acara').map(m => <Card key={m.id} member={m} />)}
+                       </div>
+                       <div className="flex flex-col items-center space-y-4">
+                           {getMemberByRole('Koordinator Seksi Humas') && <Card member={getMemberByRole('Koordinator Seksi Humas')} />}
+                           {getMembersByRole('Anggota Seksi Humas').map(m => <Card key={m.id} member={m} />)}
+                       </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const GalleryView = ({ gallery, setGallery }) => {
+    const [showModal, setShowModal] = useState(false);
+    const [formData, setFormData] = useState({ url: '', caption: '' });
+    const [viewingImage, setViewingImage] = useState(null);
+
+    const handleOpenModal = () => {
+        setFormData({ url: '', caption: '' });
+        setShowModal(true);
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const newImage = {
+            id: gallery.length > 0 ? Math.max(...gallery.map(g => g.id)) + 1 : 1,
+            ...formData
+        };
+        setGallery([newImage, ...gallery]);
+        setShowModal(false);
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Galeri Dokumentasi</h2>
+                <button onClick={handleOpenModal} className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">
+                    <Plus size={20} className="mr-2" />
+                    Tambah Foto
+                </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {gallery.map(image => (
+                    <div key={image.id} className="group relative cursor-pointer" onClick={() => setViewingImage(image)}>
+                        <img src={image.url} alt={image.caption} className="w-full h-48 object-cover rounded-lg shadow-md" />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-end p-4 rounded-lg">
+                            <p className="text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">{image.caption}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Add Photo Modal */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Tambah Foto Baru</h3>
+                            <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"><X size={24} /></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <input type="text" name="url" value={formData.url} onChange={(e) => setFormData({...formData, url: e.target.value})} placeholder="URL Gambar" className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                            <input type="text" name="caption" value={formData.caption} onChange={(e) => setFormData({...formData, caption: e.target.value})} placeholder="Keterangan Foto" className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                            <div className="flex justify-end pt-4">
+                                <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            
+            {/* View Image Modal */}
+            {viewingImage && (
+                 <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50" onClick={() => setViewingImage(null)}>
+                     <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                        <img src={viewingImage.url} alt={viewingImage.caption} className="rounded-lg shadow-2xl max-w-full max-h-[80vh]" />
+                        <p className="text-white text-center mt-4">{viewingImage.caption}</p>
+                        <button onClick={() => setViewingImage(null)} className="absolute -top-4 -right-4 bg-white rounded-full p-1 text-gray-800"><X size={24}/></button>
+                     </div>
+                 </div>
+            )}
+        </div>
+    );
+};
+
+const AttendanceView = ({ members, meetings, attendance, setAttendance }) => {
+    const [selectedEvent, setSelectedEvent] = useState(meetings.length > 0 ? `meeting-${meetings[0].id}` : '');
+    
+    const handleStatusChange = (memberId, status) => {
+        setAttendance(prev => ({
+            ...prev,
+            [selectedEvent]: {
+                ...prev[selectedEvent],
+                [`member-${memberId}`]: status
+            }
+        }));
+    };
+
+    const currentAttendance = attendance[selectedEvent] || {};
+    const attendanceSummary = useMemo(() => {
+        const summary = { Hadir: 0, Izin: 0, Sakit: 0, Alpa: 0, Total: members.length };
+        Object.values(currentAttendance).forEach(status => {
+            if (summary[status] !== undefined) {
+                summary[status]++;
+            }
+        });
+        // Count members not in the record as Alpa
+        const recordedMembers = Object.keys(currentAttendance).map(k => parseInt(k.split('-')[1]));
+        const unrecordedCount = members.filter(m => !recordedMembers.includes(m.id)).length;
+        summary.Alpa += unrecordedCount;
+
+        return summary;
+    }, [currentAttendance, members]);
+
+    const StatusButton = ({ memberId, currentStatus }) => {
+        const statuses = [
+            { id: 'Hadir', icon: CheckCircle, color: 'green' },
+            { id: 'Izin', icon: Info, color: 'blue' },
+            { id: 'Sakit', icon: AlertCircle, color: 'yellow' },
+            { id: 'Alpa', icon: XCircle, color: 'red' },
+        ];
+        return (
+            <div className="flex space-x-1">
+                {statuses.map(s => (
+                    <button 
+                        key={s.id}
+                        onClick={() => handleStatusChange(memberId, s.id)}
+                        className={`p-2 rounded-full transition ${currentStatus === s.id ? `bg-${s.color}-500 text-white shadow-md` : `text-gray-400 hover:bg-${s.color}-100 hover:text-${s.color}-600 dark:hover:bg-gray-700`}`}
+                    >
+                        <s.icon size={18} />
+                    </button>
+                ))}
+            </div>
+        );
+    };
+
+    return (
+        <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Absensi Kehadiran</h2>
+            
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih Rapat/Kegiatan</label>
+                <select 
+                    value={selectedEvent} 
+                    onChange={(e) => setSelectedEvent(e.target.value)}
+                    className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                    {meetings.map(m => <option key={m.id} value={`meeting-${m.id}`}>{m.title} ({new Date(m.date).toLocaleDateString('id-ID')})</option>)}
+                </select>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="bg-green-100 dark:bg-green-900/50 p-4 rounded-lg"><p className="font-bold text-2xl text-green-700 dark:text-green-300">{attendanceSummary.Hadir}</p><p className="text-sm text-green-600 dark:text-green-400">Hadir</p></div>
+                <div className="bg-blue-100 dark:bg-blue-900/50 p-4 rounded-lg"><p className="font-bold text-2xl text-blue-700 dark:text-blue-300">{attendanceSummary.Izin}</p><p className="text-sm text-blue-600 dark:text-blue-400">Izin</p></div>
+                <div className="bg-yellow-100 dark:bg-yellow-900/50 p-4 rounded-lg"><p className="font-bold text-2xl text-yellow-700 dark:text-yellow-300">{attendanceSummary.Sakit}</p><p className="text-sm text-yellow-600 dark:text-yellow-400">Sakit</p></div>
+                <div className="bg-red-100 dark:bg-red-900/50 p-4 rounded-lg"><p className="font-bold text-2xl text-red-700 dark:text-red-300">{attendanceSummary.Alpa}</p><p className="text-sm text-red-600 dark:text-red-400">Alpa</p></div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead className="border-b-2 border-gray-200 dark:border-gray-700">
+                        <tr>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Nama Anggota</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300 text-center">Status Kehadiran</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {members.map(member => (
+                            <tr key={member.id} className="border-b border-gray-100 dark:border-gray-700">
+                                <td className="p-4 font-medium text-gray-800 dark:text-gray-100">{member.name}</td>
+                                <td className="p-4">
+                                    <StatusButton memberId={member.id} currentStatus={currentAttendance[`member-${member.id}`]} />
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+const MeetingsView = ({ meetings, setMeetings }) => {
+    // This is a simplified view. CRUD can be added similar to other views.
+    return (
+        <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Jadwal Rapat</h2>
+             <div className="space-y-4">
+                {meetings.sort((a,b) => new Date(a.date) - new Date(b.date)).map(meeting => (
+                    <div key={meeting.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{meeting.title}</h3>
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500 dark:text-gray-400 mt-2 mb-3">
+                            <span>🗓️ {new Date(meeting.date).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</span>
+                            <span>📍 {meeting.location}</span>
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{meeting.agenda}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+
+// --- Unchanged Components (for brevity) ---
+// ProgramsView, AnnouncementsView, FinanceView are mostly unchanged but would benefit from the new ConfirmModal
+// For this example, I'll reuse them as is, but in a real app, I'd refactor the window.confirm.
+
+const ProgramsView = ({ programs, setPrograms, members }) => {
+    const [showModal, setShowModal] = useState(false);
+    const [editingProgram, setEditingProgram] = useState(null);
+    const [formData, setFormData] = useState({ name: '', pic: '', status: 'Terencana', date: '' });
+
+    const handleOpenModal = (program = null) => {
+        setEditingProgram(program);
+        setFormData(program ? { ...program } : { name: '', pic: members[0]?.name || '', status: 'Terencana', date: '' });
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setEditingProgram(null);
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (editingProgram) {
+            setPrograms(programs.map(p => p.id === editingProgram.id ? { ...p, ...formData } : p));
+        } else {
+            const newProgram = {
+                id: programs.length > 0 ? Math.max(...programs.map(p => p.id)) + 1 : 1,
+                ...formData
+            };
+            setPrograms([...programs, newProgram]);
+        }
+        handleCloseModal();
+    };
+
+    const handleDelete = (id) => {
+        if (window.confirm('Apakah Anda yakin ingin menghapus program kerja ini?')) {
+            setPrograms(programs.filter(p => p.id !== id));
+        }
+    };
+    
+    const StatusBadge = ({ status }) => {
+        const baseClasses = "px-3 py-1 text-xs font-semibold rounded-full";
+        let specificClasses = "";
+        switch (status) {
+            case 'Selesai': specificClasses = "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"; break;
+            case 'Berjalan': specificClasses = "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"; break;
+            case 'Terencana': specificClasses = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"; break;
+            default: specificClasses = "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
+        }
+        return <span className={`${baseClasses} ${specificClasses}`}>{status}</span>;
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Program Kerja</h2>
+                <button onClick={() => handleOpenModal()} className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">
+                    <Plus size={20} className="mr-2" />
+                    Tambah Program
+                </button>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead className="border-b-2 border-gray-200 dark:border-gray-700">
+                        <tr>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Nama Program</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Penanggung Jawab</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Tanggal</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Status</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {programs.map(program => (
+                            <tr key={program.id} className="border-b border-gray-100 dark:border-gray-700">
+                                <td className="p-4 font-medium text-gray-800 dark:text-gray-100">{program.name}</td>
+                                <td className="p-4 text-gray-600 dark:text-gray-300">{program.pic}</td>
+                                <td className="p-4 text-gray-600 dark:text-gray-300">{new Date(program.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
+                                <td className="p-4"><StatusBadge status={program.status} /></td>
+                                <td className="p-4 text-center">
+                                    <div className="flex justify-center space-x-2">
+                                        <button onClick={() => handleOpenModal(program)} className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"><Edit size={18} /></button>
+                                        <button onClick={() => handleDelete(program.id)} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition"><Trash2 size={18} /></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white">{editingProgram ? 'Edit Program' : 'Tambah Program Baru'}</h3>
+                            <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"><X size={24} /></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Program</label>
+                                <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Penanggung Jawab (PIC)</label>
+                                <select name="pic" value={formData.pic} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+                                    {members.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Pelaksanaan</label>
+                                <input type="date" name="date" value={formData.date} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                                <select name="status" value={formData.status} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+                                    <option value="Terencana">Terencana</option>
+                                    <option value="Berjalan">Berjalan</option>
+                                    <option value="Selesai">Selesai</option>
+                                </select>
+                            </div>
+                            <div className="flex justify-end pt-4">
+                                <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const AnnouncementsView = ({ announcements, setAnnouncements }) => {
+    const [showModal, setShowModal] = useState(false);
+    const [formData, setFormData] = useState({ title: '', content: '' });
+
+    const handleOpenModal = () => {
+        setFormData({ title: '', content: '' });
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const newAnnouncement = {
+            id: announcements.length > 0 ? Math.max(...announcements.map(a => a.id)) + 1 : 1,
+            ...formData,
+            date: new Date().toISOString().split('T')[0]
+        };
+        setAnnouncements([newAnnouncement, ...announcements]);
+        handleCloseModal();
+    };
+    
+    const handleDelete = (id) => {
+        if (window.confirm('Apakah Anda yakin ingin menghapus pengumuman ini?')) {
+            setAnnouncements(announcements.filter(a => a.id !== id));
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Pengumuman</h2>
+                <button onClick={handleOpenModal} className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">
+                    <Plus size={20} className="mr-2" />
+                    Buat Pengumuman
+                </button>
+            </div>
+            <div className="space-y-4">
+                {announcements.map(ann => (
+                    <div key={ann.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md relative">
+                        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{ann.title}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-3">
+                            Diposting pada {new Date(ann.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{ann.content}</p>
+                        <button onClick={() => handleDelete(ann.id)} className="absolute top-4 right-4 text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition"><Trash2 size={18} /></button>
+                    </div>
+                ))}
+            </div>
+
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Buat Pengumuman Baru</h3>
+                            <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"><X size={24} /></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul</label>
+                                <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Isi Pengumuman</label>
+                                <textarea name="content" value={formData.content} onChange={handleChange} rows="5" className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                            </div>
+                            <div className="flex justify-end pt-4">
+                                <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">Publikasikan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const FinanceView = ({ transactions, setTransactions }) => {
+    const [showModal, setShowModal] = useState(false);
+    const [formData, setFormData] = useState({ description: '', type: 'Pemasukan', amount: '', date: new Date().toISOString().split('T')[0] });
+
+    const { totalIncome, totalExpense, balance } = useMemo(() => {
+        const income = transactions.filter(t => t.type === 'Pemasukan').reduce((sum, t) => sum + t.amount, 0);
+        const expense = transactions.filter(t => t.type === 'Pengeluaran').reduce((sum, t) => sum + t.amount, 0);
+        return { totalIncome: income, totalExpense: expense, balance: income - expense };
+    }, [transactions]);
+
+    const handleOpenModal = () => {
+        setFormData({ description: '', type: 'Pemasukan', amount: '', date: new Date().toISOString().split('T')[0] });
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => setShowModal(false);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const newTransaction = {
+            id: transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1,
+            ...formData,
+            amount: Number(formData.amount)
+        };
+        setTransactions([...transactions, newTransaction].sort((a,b) => new Date(b.date) - new Date(a.date)));
+        handleCloseModal();
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Manajemen Keuangan</h2>
+                <button onClick={handleOpenModal} className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">
+                    <Plus size={20} className="mr-2" />
+                    Tambah Transaksi
+                </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-green-100 dark:bg-green-900/50 p-6 rounded-xl shadow">
+                    <p className="text-green-800 dark:text-green-300">Total Pemasukan</p>
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-200">{formatCurrency(totalIncome)}</p>
+                </div>
+                <div className="bg-red-100 dark:bg-red-900/50 p-6 rounded-xl shadow">
+                    <p className="text-red-800 dark:text-red-300">Total Pengeluaran</p>
+                    <p className="text-2xl font-bold text-red-900 dark:text-red-200">{formatCurrency(totalExpense)}</p>
+                </div>
+                <div className="bg-blue-100 dark:bg-blue-900/50 p-6 rounded-xl shadow">
+                    <p className="text-blue-800 dark:text-blue-300">Saldo Akhir</p>
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-200">{formatCurrency(balance)}</p>
+                </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead className="border-b-2 border-gray-200 dark:border-gray-700">
+                        <tr>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Tanggal</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Keterangan</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Tipe</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300 text-right">Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {transactions.map(t => (
+                            <tr key={t.id} className="border-b border-gray-100 dark:border-gray-700">
+                                <td className="p-4 text-gray-600 dark:text-gray-300">{new Date(t.date).toLocaleDateString('id-ID')}</td>
+                                <td className="p-4 font-medium text-gray-800 dark:text-gray-100">{t.description}</td>
+                                <td className="p-4">
+                                    <span className={`font-semibold ${t.type === 'Pemasukan' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{t.type}</span>
+                                </td>
+                                <td className="p-4 text-right font-mono text-gray-700 dark:text-gray-200">{formatCurrency(t.amount)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Tambah Transaksi</h3>
+                            <button onClick={handleCloseModal} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"><X size={24} /></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal</label>
+                                <input type="date" name="date" value={formData.date} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Keterangan</label>
+                                <input type="text" name="description" value={formData.description} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe Transaksi</label>
+                                <select name="type" value={formData.type} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+                                    <option value="Pemasukan">Pemasukan</option>
+                                    <option value="Pengeluaran">Pengeluaran</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah (Rp)</label>
+                                <input type="number" name="amount" value={formData.amount} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Contoh: 50000" required />
+                            </div>nd pt-4"
+                            <div className="flex justify-e>
+                                <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
